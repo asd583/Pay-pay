@@ -1,0 +1,18 @@
+.item-card .price-row {
+  display: flex;
+  justify-content: space-between; /* Left and right stick to edges */
+  align-items: center;
+  width: 100%;
+  padding: 0 10px; /* optional padding inside the card */
+  font-size: 0.85rem;
+}
+
+.item-card .price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* left block aligns left */
+}
+
+.item-card .price-block.right {
+  align-items: flex-end; /* right block aligns right */
+}
