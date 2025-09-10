@@ -58,3 +58,16 @@ function sendMoney(){
   screenshotInput.value = '';
   updateTransactionList();
 }
+div.innerHTML = `
+  <div class="price-row" id="price-${i}">
+    <div class="price-block left">
+      <div class="usd" id="usd-left-${i}">yfrS${p.usd.toFixed(4)}</div>
+      <div class="mmk" id="mmk-left-${i}">${normalMmk.toFixed(2)} MMK</div>
+    </div>
+    <span>→</span>
+    <div class="price-block right">
+      <div class="usd" id="usd-right-${i}">yfrS${p.usd.toFixed(4)}</div>
+      <div class="mmk" id="mmk-right-${i}">${tripleMmk.toFixed(2)} MMK</div>
+    </div>
+  </div>
+`;
