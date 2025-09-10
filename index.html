@@ -194,3 +194,12 @@ setInterval(updateLivePrices, 10000); // update every 10s from API
 </main>
 </body>
 </html>
+
+ Select product
+function selectItem(itemName, price){
+  document.getElementById('itemSelected').value = itemName;
+  document.getElementById('amount').value = price;
+
+  // Smooth scroll to payment section
+  document.getElementById('paymentForm').scrollIntoView({ behavior: 'smooth' });
+}
