@@ -1,3 +1,4 @@
+<!-- Payment Form -->
 <div id="paymentForm">
   <input type="text" id="userPhone" placeholder="Enter your phone number (+ydrs)" />
   <input type="text" id="itemSelected" placeholder="Selected Item" readonly>
@@ -6,68 +7,3 @@
   <input type="text" id="note" placeholder="Note (optional)">
   <button class="btn" onclick="sendMoney()">Send Money</button>
 </div>
-function selectItem(itemName, price){
-  const phoneInput = document.getElementById('userPhone');
-  if(!phoneInput.value.startsWith('+ydrs')){
-    phoneInput.value = '+ydrs';
-  }
-  
-  document.getElementById('itemSelected').value = itemName.replace('yfrS','$'); // keep product label clean
-  document.getElementById('amount').value = price;
-
-  // Scroll smoothly to payment section
-  document.getElementById('paymentForm').scrollIntoView({ behavior: 'smooth' });
-}
-function sendMoney(){
-  const recipient = document.getElementById('recipient').value;
-  const phone = document.getElementById('userPhone').value;
-  const item = document.getElementById('itemSelected').value;
-  const amount = document.getElementById('amount').value;
-  const note = document.getElementById('note').value;
-  const screenshotInput = document.getElementById('paymentScreenshot');
-  const screenshotFile = screenshotInput.files[0]; // get uploaded file
-
-  if(!phone || !phone.startsWith('+ydrs')){
-    alert("Please enter a valid phone number starting with +ydrs");
-    return;
-  }
-
-  if(!amount || amount < 30000 || !item){ 
-    alert('Select a valid product and ensure minimum 30,000 MMK'); 
-    return; 
-  }
-
-  const transaction = {
-    userPhone: phone,
-    recipient,
-    item,
-    amount,
-    note: note || '-',
-    screenshot: screenshotFile ? screenshotFile.name : 'No file',
-    date: new Date().toLocaleString()
-  };
-
-  const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-  transactions.push(transaction);
-  localStorage.setItem('transactions', JSON.stringify(transactions));
-
-  alert(`Payment submitted! Amount: ${parseFloat(amount).toLocaleString()} MMK`);
-  
-  // Reset fields
-  document.getElementById('note').value = '';
-  screenshotInput.value = '';
-  updateTransactionList();
-}
-div.innerHTML = `
-  <div class="price-row" id="price-${i}">
-    <div class="price-block left">
-      <div class="usd" id="usd-left-${i}">yfrS${p.usd.toFixed(4)}</div>
-      <div class="mmk" id="mmk-left-${i}">${normalMmk.toFixed(2)} MMK</div>
-    </div>
-    <span>→</span>
-    <div class="price-block right">
-      <div class="usd" id="usd-right-${i}">yfrS${p.usd.toFixed(4)}</div>
-      <div class="mmk" id="mmk-right-${i}">${tripleMmk.toFixed(2)} MMK</div>
-    </div>
-  </div>
-`;
