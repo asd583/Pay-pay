@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motix Pay - User</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,Geneva,sans-serif; }
+body { background:#0f2027; color:white; min-height:100vh; }
+header { display:flex; justify-content:center; align-items:center; padding:20px; background:linear-gradient(to right,#1f1c2c,#928dab); border-bottom:2px solid #00ffc3; }
+.logo { font-size:2rem; font-weight:bold; color:#00ffc3; }
+main { padding:40px 10%; text-align:center; }
+h2 { color:#00ffc3; text-shadow:0 0 5px #00ffc3; margin-bottom:20px; }
+p { margin-bottom:30px; color:#ccc; }
+
+/* Product grid */
+#items { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px; justify-items:center; margin-bottom:30px; }
+.item-card { 
+  background:linear-gradient(145deg,#232323,#333); 
+  width:200px; height:160px; 
+  display:flex; flex-direction:column; 
+  justify-content:center; align-items:center; 
+  border-radius:20px; 
+  cursor:pointer; 
+  transition:0.2s; 
+  box-shadow:0 2px 8px rgba(0,255,195,0.1); 
+  outline:none; 
+  padding:10px;
+}
+.item-card:hover { transform:scale(1.03); box-shadow:0 3px 10px rgba(0,255,195,0.15); }
+.item-card.disabled { opacity:0.4; pointer-events:none; box-shadow:none; }
+.item-card .price-row { display:flex; align-items:center; justify-content:center; gap:12px; font-size:0.85rem; margin-bottom:5px; flex-wrap:wrap; text-align:center; }
+.item-card .price-block { display:flex; flex-direction:column; align-items:center; }
+.item-card .usd { color:#aaa; font-size:0.8rem; }
+.item-card .mmk { color:#00ffc3; font-weight:bold; font-size:0.9rem; }
+
+/* Payment form */
+#paymentForm { background:#232323; padding:25px; border-radius:15px; max-width:400px; margin:0 auto 30px; box-shadow:0 5px 15px rgba(0,255,195,0.3); display:flex; flex-direction:column; gap:10px; }
+#paymentForm input, #paymentForm select { width:100%; padding:12px; border-radius:8px; border:none; }
+#itemSelected { background:#444; color:#ccc; cursor:not-allowed; }
+.btn { padding:12px 25px; border-radius:25px; font-weight:bold; cursor:pointer; border:none; background:#00ffc3; color:#0f2027; transition:0.3s; }
+.btn:hover { background:#00e6b8; transform:translateY(-3px); }
+
+/* Transactions */
+#userTransactions { margin-top:20px; }
+#userTransactions ul { list-style:none; padding-left:0; }
+#userTransactions li { background:#333; margin-bottom:8px; padding:10px 12px; border-radius:10px; box-shadow:0 2px 8px rgba(0,255,195,0.2); }
+</style>
+</head>
+<body>
+<header><div class="logo">Motix Pay</div></header>
+<main>
+<h2>Welcome User</h2>
+<p>Select an item and make a payment:</p>
+<div id="items"></div>
+
+<div id="paymentForm">
+  <select id="recipient">
+    <option value="KBZ Pay">KBZ Pay</option>
+    <option value="Wave Pay">Wave Pay</option>
+  </select>
+  <input type="text" id="itemSelected" placeholder="Selected Item" readonly>
+  <input type="number" id="amount" placeholder="Amount (MMK)" readonly>
+  <input type="text" id="note" placeholder="Note (optional)">
+  <button class="btn" onclick="sendMoney()">Send Money</button>
+</div>
+
+<div id="userTransactions">
+<h4>Your Transactions</h4>
+<ul id="transactionList"></ul>
+</div>
+
+<script>
+// Product USD prices
+const products = [
+  { usd: 10 }, { usd: 15 }, { usd: 20 }, { usd: 25 }, { usd: 30 },
+  { usd: 35 }, { usd: 40 }, { usd: 45 }, { usd: 50 }, { usd: 60 }
+];
+
+let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+const itemsDiv = document.getElementById('items');
+
+let liveRate = 4000; // fallback
+
+// Fetch live USD → MMK exchange rate
+async function fetchExchangeRate() {
+  try {
+    const res = await fetch('https://api.exchangerate.host/latest?base=USD&symbols=MMK');
+    const data = await res.json();
+    liveRate = data.rates.MMK;
+  } catch(err) {
+    console.error('Exchange rate fetch failed, using fallback 4000');
+    liveRate = 4000;
+  }
+  renderProducts();
+}
+
+// Render products with live exchange rate
+function renderProducts() {
+  itemsDiv.innerHTML = '';
+  products.forEach((p,i)=>{
+    const normalMmk = p.usd * liveRate;
+    const tripleMmk = normalMmk * 3;
+
+    const div = document.createElement('div');
+    div.className = 'item-card';
+    if(tripleMmk < 30000) div.classList.add('disabled');
+
+    div.innerHTML = `
+      <div class="price-row" id="price-${i}">
+        <div class="price-block">
+          <div class="usd" id="usd-left-${i}">$${p.usd.toFixed(4)}</div>
+          <div class="mmk" id="mmk-left-${i}">${normalMmk.toFixed(2)} MMK</div>
+        </div>
+        <span>→</span>
+        <div class="price-block">
+          <div class="usd" id="usd-right-${i}">$${p.usd.toFixed(4)}</div>
+          <div class="mmk" id="mmk-right-${i}">${tripleMmk.toFixed(2)} MMK</div>
+        </div>
+      </div>
+    `;
+
+    if(tripleMmk >= 30000){
+      div.onclick = ()=>selectItem(`$${p.usd}`, tripleMmk.toFixed(2));
+    }
+
+    itemsDiv.appendChild(div);
+  });
+}
+
+// Update prices every 10 seconds
+async function updateLivePrices() {
+  await fetchExchangeRate();
+  products.forEach((p,i)=>{
+    const normalMmk = p.usd * liveRate;
+    const tripleMmk = normalMmk * 3;
+
+    document.getElementById(`mmk-left-${i}`).textContent = `${normalMmk.toFixed(2)} MMK`;
+    document.getElementById(`mmk-right-${i}`).textContent = `${tripleMmk.toFixed(2)} MMK`;
+  });
+}
+
+// Select product
+function selectItem(itemName, price){
+  document.getElementById('itemSelected').value = itemName;
+  document.getElementById('amount').value = price;
+}
+
+// Send money
+function sendMoney(){
+  const recipient = document.getElementById('recipient').value;
+  const item = document.getElementById('itemSelected').value;
+  const amount = document.getElementById('amount').value;
+  const note = document.getElementById('note').value;
+
+  if(!amount || amount <= 0 || !item){ alert('Select a valid product first'); return; }
+  if(amount < 30000){ alert("Minimum payment is 30,000 MMK."); return; }
+
+  const transaction = {
+    user:'User',
+    recipient,
+    item,
+    amount,
+    note: note || '-',
+    date: new Date().toLocaleString()
+  };
+
+  transactions.push(transaction);
+  localStorage.setItem('transactions', JSON.stringify(transactions));
+  alert(`Paid ${parseFloat(amount).toLocaleString()} MMK with ${recipient} for ${item}!`);
+  document.getElementById('note').value='';
+  updateTransactionList();
+}
+
+// Update transactions
+function updateTransactionList(){
+  const list = document.getElementById('transactionList');
+  list.innerHTML = '';
+  if(transactions.length===0){ list.innerHTML='<li>No transactions yet.</li>'; }
+  else{
+    transactions.forEach(tx=>{
+      const li = document.createElement('li');
+      li.innerHTML=`<strong>${tx.date}</strong>: Paid ${parseFloat(tx.amount).toLocaleString()} MMK with ${tx.recipient} for ${tx.item}`;
+      list.appendChild(li);
+    });
+  }
+}
+
+// Initialize
+fetchExchangeRate();
+updateTransactionList();
+setInterval(updateLivePrices, 10000); // update every 10s from API
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motix Pay - Admin</title>
+<style>
+body{background:#0f2027;color:white;padding:30px;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;}
+h2{color:#00ffc3;text-shadow:0 0 5px #00ffc3;margin-bottom:20px;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:12px;text-align:center;border-bottom:1px solid #00ffc3;}
+th{background:#1f1c2c;color:#00ffc3;}
+tr:nth-child(even) td{background:#2c2c2c;}
+tr:nth-child(odd) td{background:#232323;}
+</style>
+</head>
+<body>
+<h2>Admin Dashboard - All Transactions</h2>
+<table id="adminTransactionsTable">
+<thead>
+<tr>
+<th>#</th>
+<th>User</th>
+<th>Item</th>
+<th>Amount</th>
+<th>Note</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody>
+<tr><td colspan="6">No transactions yet.</td></tr>
+</tbody>
+</table>
+
+<script>
+let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+
+function updateAdminTable(){
+  const tbody=document.querySelector('#adminTransactionsTable tbody');
+  tbody.innerHTML='';
+  if(transactions.length===0){ tbody.innerHTML='<tr><td colspan="6">No transactions yet.</td></tr>'; }
+  else{
+    transactions.forEach((tx,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${i+1}</td><td>${tx.user}</td><td>${tx.item}</td><td>$${tx.amount}</td><td>${tx.note}</td><td>${tx.date}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+}
+
+// Listen for changes in localStorage (fires when user page updates transactions)
+window.addEventListener('storage', () => {
+  transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+  updateAdminTable();
+});
+
+updateAdminTable();
+</script>
+</body>
+</html>
